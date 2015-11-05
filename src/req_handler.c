@@ -2,7 +2,7 @@
 
 #include "req_handler.h"
 
-#define _RH_BUFFSIZE 16
+#define _RH_BUFFSIZE 2048
 
 char* pathname;
 
@@ -35,7 +35,7 @@ void * handle_request(void* arg){
 	
 	printf("%d Recebeu pedido de %u.%u.%u.%u\n",getpid(),address[0],address[1],address[2],address[3]);
 	
-	do{
+	while(1){
 		buffer = realloc(buffer,tries * _RH_BUFFSIZE * sizeof(char) + 1);
 		read_nr = read((*req).socket_fd,buffer + (tries-1) * _RH_BUFFSIZE * sizeof(char),_RH_BUFFSIZE);
 		buffer[read_nr] = '\0';
@@ -45,7 +45,7 @@ void * handle_request(void* arg){
 			}else{
 				breakplace='\0';
 				name = malloc(strlen(buffer)*sizeof(char));
-				if(sscanf(buffer,"HTTP/1.%"SCNu8" %s GET",&protocol,name)!=2){
+				if(sscanf(buffer,"GET %s HTTP/1.%"SCNu8,name,&protocol)!=2){
 					code = 400;
 				}else{
 					if(protocol>1){
@@ -54,30 +54,38 @@ void * handle_request(void* arg){
 						c_name = malloc((strlen(pathname)+strlen(name)+1)*sizeof(char));
 						strcpy(c_name,pathname);
 						strcat(c_name,name);
-						if(name[strlen(name)-1]=='/'){
-							/* Directory */
+						if(strcmp(name,"/estatisticas/Pedidos")==0){
 							code = 200;
 							type = 4;
+						}else if(strcmp(name,"/estatisticas/ClearAll")==0){
+							code = 200;
+							type = 6;
 						}else{
-							file_fd = open(c_name,O_RDONLY);
-							if(file_fd < 0){
-								code = 404;
+							if(name[strlen(name)-1]=='/'){
+								/* Directory */
+								code = 200;
+								type = 2;
 							}else{
-								if(fstat(file_fd,&filestat)==0 && filestat.st_mode & S_IXUSR){
-									/* CGI */
-									code = 200;
-									type = 2;
+								file_fd = open(c_name,O_RDONLY);
+								if(file_fd < 0){
+									code = 404;
 								}else{
-									/* File */
-									extension = strrchr(name,'.');
-									if(strcmp(extension,"html")==0){
+									if(fstat(file_fd,&filestat)==0 && filestat.st_mode & S_IXUSR){
+										/* CGI */
 										code = 200;
-										type = 0;
-									}else if(strcmp(extension,"png")==0){
-										code = 200;
-										type = 1;
+										type = 3;
 									}else{
-										code = 415;
+										/* File */
+										extension = strrchr(name,'.');
+										if(strcmp(extension,".html")==0){
+											code = 200;
+											type = 0;
+										}else if(strcmp(extension,".png")==0){
+											code = 200;
+											type = 1;
+										}else{
+											code = 415;
+										}
 									}
 								}
 							}
@@ -93,12 +101,16 @@ void * handle_request(void* arg){
 			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 200 OK\r\n",protocol);
 			if(type%2 == 0){
 				dprintf((*req).socket_fd,"Content-Type:text/html; charset=utf-8\n\n");
-			}else{
+			}else if(type==1){
 				dprintf((*req).socket_fd,"Content-Type:image/png\n\n");
+			}else if(type==3){
+				/*CGI*/
 			}
-			
 			if(type<2){
-				
+				do{
+					read_nr = read(file_fd,buffer,tries * _RH_BUFFSIZE * sizeof(char));
+					write((*req).socket_fd,buffer,read_nr);
+				}while(read_nr > 0);
 			}
 			break;
 		case 415:

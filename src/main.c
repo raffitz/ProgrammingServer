@@ -62,7 +62,7 @@ int main(int argc,char** argv){
 	
 	/* Declaration of the path name: */
 	pathname = malloc(10*sizeof(char));
-	sprintf(pathname,"http_docs")
+	sprintf(pathname,"http_docs");
 	
 	/* Initialization of starting accept processes: */
 	for(i=0;i<8;i++){
