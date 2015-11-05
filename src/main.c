@@ -5,6 +5,7 @@
 #include "pid_list.h"
 #include "comm_man.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <fcntl.h>
@@ -19,6 +20,8 @@ pid_t parent;
 /* Declaration of descendant list: */
 pid_list* pid_base;
 pid_list* pid_top;
+
+char* pathname;
 
 int main(int argc,char** argv){
 	/* Declaration of auxiliary primitives: */
@@ -57,6 +60,11 @@ int main(int argc,char** argv){
 		exit(-1);
 	}
 	
+	/* Declaration of the path name: */
+	pathname = malloc(10*sizeof(char));
+	sprintf(pathname,"http_docs")
+	
+	/* Initialization of starting accept processes: */
 	for(i=0;i<8;i++){
 		switch(fork()){
 			case 0:
