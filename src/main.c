@@ -97,6 +97,9 @@ void load_config(int sig){
 				cgipath = malloc((strlen(auxbuf)+1)*sizeof(char));
 				strcpy(cgipath,auxbuf);
 			}
+			while(cgipath[strlen(cgipath)-1]=='\n' || cgipath[strlen(cgipath)-1]=='\r'){
+				cgipath[strlen(cgipath)-1]='\0';
+			}
 		}
 		pathname = malloc((strlen(buffer)+1)*sizeof(char));
 		strcpy(pathname,buffer);

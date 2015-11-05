@@ -39,6 +39,7 @@ void pid_killall(pid_list* base){
 	
 	while(aux!=NULL){
 		kill((*aux).pid,SIGINT);
+		waitpid((*aux).pid,NULL,0);
 		aux = (*aux).next;
 	}
 	

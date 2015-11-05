@@ -1,29 +1,13 @@
 #!/bin/bash
-#
-# Usage: buscapids programa
-#
-###########################################################################
-# TODO: verificar numero de parametros correcto.
-###########################################################################
-#
-# Este script deve receber o nome de um programa e
-# retornar os pids de todos os processos desse programa.
-#
-# O comando ps com a opcao -e devolve a listagem de todos os processos.
-# O resultado deste comando e' redireccionado para o grep que selecciona
-# apenas as linhas referentes aos processos do programa para o qual se
-# pretende obter os pids. 
-#
-###########################################################################
-# TODO: completar o script para fazer o pretendido.
-###########################################################################
-#
-# Sugestao: consulte as paginas do man e utilize o comando cut ou awk
-# para extrair do resultado apenas os pids dos processos. Utilize um pipe
-# para  redireccionar o resultado obtido para o comando cut ou awk.
-#
+
 echo "Content-Type:text/html; charset=utf-8"
 echo ""
-echo "<html><head><title>$(pwd)</title></head><body>"
-ls "$1" -ap1 | gawk '{ print "<a href=\""$1"\">"$1"</a><br/>" }' | cat
+echo "<html><head><title>Direct0ry</title>"
+echo "<style>table,th,td { border:1px solid black; } th { background-color:#666666"
+echo "color:#ffffff text-align:center font-weight:bold } </style>"
+echo "</head><body>"
+echo "<h1>Browsing Directory</h1>$(pwd) in host machine<br/><br/>"
+echo "<table><tr><th>File:</th></tr>"
+ls "$1" -ap1 | gawk '{ print "<tr><td><a href=\""$1"\">"$1"</a><br/></td></tr>" }' | cat
+echo "</table>"
 echo "</body></html>"
