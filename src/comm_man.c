@@ -1,7 +1,11 @@
 /* Cabeçalho */
 
 #include "comm_man.h"
-
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netdb.h>
 
 int create_socket(){
 	int socketfd;
@@ -16,7 +20,7 @@ int create_socket(){
 		perror("getaddrinfo");
 		exit(-1);
 	}
-	if(bind(socketfd,server_address[0].ai_addr,server_address[0].ai_addrlen)<0){
+	if(bind(socketfd,(*server_address).ai_addr,(*server_address).ai_addrlen)<0){
 		perror("bind");
 		exit(-1);
 	}
