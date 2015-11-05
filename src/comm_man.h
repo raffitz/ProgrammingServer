@@ -13,4 +13,4 @@
 
 
 int create_socket();
-void socket_hub(int socketfd);
+void socket_hub(int socketfd,int statfd,int report_fd);

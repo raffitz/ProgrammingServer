@@ -31,14 +31,14 @@ int create_socket(){
 
 
 
-void socket_hub(int socketfd){
+void socket_hub(int socketfd,int statfd,int report_fd){
 	struct sockaddr_in client_info;
 	socklen_t client_length = sizeof(struct sockaddr_in);
 	int new_socket;
 	
 	while(1){
 		new_socket = accept(socketfd,(struct sockaddr*)&client_info,&client_length);
-		handle_request(new_request(new_socket,client_info,client_length));
+		handle_request(new_request(new_socket,client_info,client_length,statfd,report_fd));
 	}
 	
 }
