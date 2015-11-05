@@ -57,7 +57,7 @@ int main(int argc,char** argv){
 		exit(-1);
 	}
 	
-	for(i=0;i<4;i++){
+	for(i=0;i<8;i++){
 		switch(fork()){
 			case 0:
 				child = getpid();
