@@ -226,7 +226,6 @@ int main(int argc,char** argv){
 	load_config(0);
 	
 	/* Initialization of starting accept processes: */
-	
 	for(i=0;i<4;i++){
 		switch(fork()){
 			case 0:
@@ -240,7 +239,6 @@ int main(int argc,char** argv){
 				break;
 		}
 	}
-	
 	/* Activating the SIGUSR2 handler: */
 	signal(SIGUSR2,new_process);
 	

@@ -11,7 +11,7 @@
 
 #include "req_handler.h"
 
-#define _RH_BUFFSIZE 16
+#define _RH_BUFFSIZE 1
 
 char* pathname; /* DOCUMENT_ROOT */
 char* cgipath; /* CGI_ROOT */
@@ -53,6 +53,7 @@ void * handle_request(void* arg){
 	uint8_t report_type;
 	uint8_t report_ns;
 	uint8_t aborted = 0;
+	uint8_t skip = 0;
 	time_t start;
 	clockid_t counter;
 	struct timespec dstart,dend;
@@ -74,12 +75,17 @@ void * handle_request(void* arg){
 		}
 		read_nr = read((*req).socket_fd,buffer + (tries-1) * _RH_BUFFSIZE * sizeof(char),_RH_BUFFSIZE);
 		buffer[(read_nr) + (tries-1)*_RH_BUFFSIZE] = '\0';
-		if(strlen(buffer)==0){
+		if (buffer[0]=='\r'){
+			skip = 1;
+			code = 400;
+			break;
+		}else if(strlen(buffer)==0){
 			code = 400;
 			break;
 		}else if((breakplace = strchr(buffer,'\n'))!=NULL){
 			if (*(breakplace - sizeof(char)) != '\r'){
 				code = 400;
+				break;
 			}else{
 				breakplace[0]='\0';
 				name = malloc(strlen(buffer)*sizeof(char));
@@ -165,23 +171,27 @@ void * handle_request(void* arg){
 		}
 		tries++;
 	}
-	/* Reads rest of request, so browsers don't reject answer: */
-	do{
-		if(read((*req).socket_fd,buffer,sizeof(char))==0){
-			aborted = 1;
-			break;
-		}else if(buffer[0]=='\n'){
+	if(skip!=1){
+		/* Reads rest of request, so browsers don't reject answer: */
+		do{
 			if(read((*req).socket_fd,buffer,sizeof(char))==0){
 				aborted = 1;
 				break;
-			}else if(buffer[0]=='\r'){
+			}else if(buffer[0]=='\n'){
 				if(read((*req).socket_fd,buffer,sizeof(char))==0){
 					aborted = 1;
 					break;
-				}else if(buffer[0]=='\n') break;
+				}else if(buffer[0]=='\r'){
+					if(read((*req).socket_fd,buffer,sizeof(char))==0){
+						aborted = 1;
+						break;
+					}else if(buffer[0]=='\n') break;
+				}
 			}
-		}
-	}while(1);
+		}while(1);
+	}else{
+		aborted = 0;
+	}
 	
 	if(!aborted){
 		/* Sends answer: */
@@ -291,17 +301,22 @@ void * handle_request(void* arg){
 	
 	/* Closes inbound socket:*/
 	close((*req).socket_fd);
-	if(clock_gettime(counter,&dend)!=0){
-		perror("clock_gettime");
+	
+	if(!skip){
+		if(clock_gettime(counter,&dend)!=0){
+			perror("clock_gettime");
+		}
+		if(sem_wait(req_wr_sem)!=0) perror("sem_wait");
+		/* Sends to pipe the request details: */
+		req_write((*req).stat_fd,newrequest(name,code,address,start,(dend.tv_sec - dstart.tv_sec)*1000000 + (dend.tv_nsec - dstart.tv_nsec) / 1000));
+		if(sem_post(req_wr_sem)!=0) perror("sem_post");
+		
+		if(c_name!=NULL) free(c_name);
 	}
-	if(sem_wait(req_wr_sem)!=0) perror("sem_wait");
-	/* Sends to pipe the request details: */
-	req_write((*req).stat_fd,newrequest(name,code,address,start,(dend.tv_sec - dstart.tv_sec)*1000000 + (dend.tv_nsec - dstart.tv_nsec) / 1000));
-	if(sem_post(req_wr_sem)!=0) perror("sem_post");
 	
 	/* Frees adequate memory, returns from function. */
 	if(buffer!=NULL) free(buffer);
-	if(c_name!=NULL) free(c_name);
+	
 	free(req);
 	return NULL;
 }
