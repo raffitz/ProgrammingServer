@@ -66,17 +66,18 @@ uint16_t req_read(int fd,req_queue** base,req_queue** top){
 		req_freeall(base,top);
 		return 0;
 	}
-	base = req_push(buffer,base,top);
+	req_push(buffer,base,top);
 	return 1;
 }
 
 void req_load(char* file,req_queue** base,req_queue** top){
 	int fd;
+		int counter = 0;
 	fd = open(file,O_RDONLY);
-	int counter = 0;
+
 	if(fd<0){
 		printf("Safeguard request statistics not found.\n");
-		return NULL;
+		return;
 	}
 	while(req_read(fd,base,top)){
 		counter++;

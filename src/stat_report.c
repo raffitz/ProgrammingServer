@@ -15,7 +15,7 @@ void stat_print(int fd,req_queue * base){
 	while(aux!=NULL){
 		dprintf(fd,"<tr>");
 		dprintf(fd,"<td>%s</td><td>%s</td><td>%d</td><td>%d.%d.%d.%d</td><td>%d",
-			ctime((*aux).data.date),(*aux).data.name,(*aux).data.code,
+			ctime(&((*aux).data.date)),(*aux).data.name,(*aux).data.code,
 			(*aux).data.ip[0],(*aux).data.ip[1],(*aux).data.ip[2],(*aux).data.ip[3],
 			(*aux).data.length);
 		dprintf(fd,"</td></tr>");
@@ -34,5 +34,5 @@ void stat_clear(int fd, char* file, req_queue ** base, req_queue** top){
 	dprintf(fd,"</body></html>\n");
 	sg_fd = creat(file,0 || S_IRUSR || S_IWUSR || S_IRGRP || S_IWGRP || S_IROTH);
 	close(sg_fd);
-	return NULL;
+	return;
 }
