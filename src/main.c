@@ -43,13 +43,29 @@ int pid_register[2];
 /* Declaration of report-related pipes: */
 int report_requests[2];
 
+/* Declaration of request-writing semaphore */
+sem_t* req_wr_sem;
+
+/* Declaration of statistics request semaphore */
+sem_t* stat_sem;
+
+/* Debugging purposes-only signal handler:*/
+void debug_handler(int sig){
+	printf("%d",sig);
+	exit(-1);
+}
+
 /* SIGINT/SIGTERM handling function: */
 void sigint_handler(int sig){
 	printf("closing socket\n");
 	close(socket_fd);
+	sem_close(req_wr_sem);
+	sem_close(stat_sem);
 	if(getpid()==parent){
 		pid_killall(pid_base);
 		pid_freeall(&pid_base,&pid_top);
+		sem_unlink("/reqwrsem\0");
+		sem_unlink("/statsem\0");
 	}
 	exit(0);
 	return;
@@ -144,11 +160,32 @@ int main(int argc,char** argv){
 		exit(-1);
 	}
 	
+	/* Initialization of parent id container: */
+	parent = getpid();
+	
 	/* Initialization of socket. Bind & listen: */
 	socket_fd = create_socket();
 	
-	/* Initialization of parent id container: */
-	parent = getpid();
+	/* Initialization of semaphores: */
+	req_wr_sem = sem_open("/reqwrsem\0",O_CREAT,0 | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH,1);
+	if(req_wr_sem == SEM_FAILED){
+		perror("semaphore(req_wr)");
+		exit(-1);
+	}
+	stat_sem = sem_open("/statsem\0",O_CREAT,0 | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH,1);
+	if(req_wr_sem == SEM_FAILED){
+		perror("semaphore(stat)");
+		exit(-1);
+	}
+	
+	/* Enacting Signal Handling Functions: */
+	
+	signal(SIGINT,sigint_handler);
+	signal(SIGTERM,sigint_handler);
+	signal(SIGKILL,sigint_handler);
+	signal(SIGUSR1,load_config);
+	signal(SIGPIPE,SIG_IGN);
+	signal(SIGBUS,SIG_IGN);
 	
 	/* Initialization of structural threads: */
 	if(pthread_create(&pid_thread,NULL,pid_handler,(void*)pid_register)!=0){
@@ -168,14 +205,9 @@ int main(int argc,char** argv){
 	/*  Since it is already neatly handled by the signal function,
 	let's just call it instead of duplicating code: */
 	load_config(0);
-		
-	/* Enacting Signal Handling Functions: */
-	
-	signal(SIGINT,sigint_handler);
-	signal(SIGTERM,sigint_handler);
-	signal(SIGUSR1,load_config);
 	
 	/* Initialization of starting accept processes: */
+	
 	for(i=0;i<4;i++){
 		switch(fork()){
 			case 0:
@@ -183,6 +215,7 @@ int main(int argc,char** argv){
 				write(pid_register[1],&child,sizeof(pid_t));
 				close(stat_base.req_pipe[0]);
 				socket_hub(socket_fd,stat_base.req_pipe[1],report_requests[1]);
+				printf("Warning! You're not where you ought to be!	\n");
 				break;
 			default:
 				break;

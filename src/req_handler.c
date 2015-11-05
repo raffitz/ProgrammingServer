@@ -7,6 +7,8 @@
 char* pathname; /* DOCUMENT_ROOT */
 char* cgipath; /* CGI_ROOT */
 
+sem_t* req_wr_sem;
+sem_t* stat_sem;
 
 request * new_request(int new_socket, struct sockaddr_in client_info, socklen_t client_length,int stat_fd,int report_fd){
 	request * aux;
@@ -208,6 +210,7 @@ void * handle_request(void* arg){
 			
 				/* If we are interfacing with the statistics module: */
 				if(type>5){
+					if(sem_wait(stat_sem)!=0) perror("sem_wait");
 					if(type==6){
 						report_type=0;
 					}else{
@@ -217,27 +220,35 @@ void * handle_request(void* arg){
 					sprintf(report_name,"%x_%x",getpid(),(unsigned int) pthread_self());
 					report_ns = strlen(report_name) + 1;
 					write((*req).report_fd,&report_ns,sizeof(uint8_t));
-					if(mkfifo(report_name,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)<0){
+					if(mkfifo(report_name,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)!=0){
 						perror("mkfifo");
 						break;
 					}
 					write((*req).report_fd,report_name,report_ns*sizeof(char));
 					file_fd = open(report_name,O_RDONLY);
+					if(file_fd<0){
+						perror("open(fifo rh)");
+						unlink(report_name);
+						if (sem_post(stat_sem)!=0) perror("sem_post");
+						break;
+					}
 				}
 			
 				/* If content is a file (content-type has been already sent): */
 				if(type<2 || type>5){
 					do{
 						read_nr = read(file_fd,buffer,tries * _RH_BUFFSIZE * sizeof(char));
-						write((*req).socket_fd,buffer,read_nr);
+						if(write((*req).socket_fd,buffer,read_nr)<0){
+							break;
+						}
 					}while(read_nr > 0);
-					dprintf((*req).socket_fd,"\n");
 					close(file_fd);
 				}
 			
 				/* Continuation of the statistics section: */
 				if(type>5){
 					unlink(report_name);
+					sem_post(stat_sem);
 				}
 			
 				/* If we are listing contents of a directory: */
@@ -270,7 +281,9 @@ void * handle_request(void* arg){
 	if(clock_gettime(counter,&dend)!=0){
 		perror("clock_gettime");
 	}
+	if(sem_wait(req_wr_sem)!=0) perror("sem_wait");
 	req_write((*req).stat_fd,newrequest(name,code,address,start,(dend.tv_sec - dstart.tv_sec)*1000000 + (dend.tv_nsec - dstart.tv_nsec) / 1000));
+	if(sem_post(req_wr_sem)!=0) perror("sem_post");
 	
 	/*
 	printf("%d Recebeu pedido de %u.%u.%u.%u e demorou %ld\n",getpid(),address[0],address[1],address[2],address[3],(dend.tv_sec - dstart.tv_sec)*1000000 + (dend.tv_nsec - dstart.tv_nsec) / 1000);*/

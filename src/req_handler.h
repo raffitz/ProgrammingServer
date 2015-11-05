@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 typedef struct request{
 	int socket_fd;

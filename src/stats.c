@@ -101,7 +101,7 @@ void req_save(char* file,req_queue* base){
 	int fd;
 	req_queue* aux = base;
 	
-	fd = creat(file,0 || S_IRUSR || S_IWUSR || S_IRGRP || S_IWGRP || S_IROTH);
+	fd = creat(file,0 | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 	while(aux!=NULL){
 		req_write(fd,(*aux).data);
 		aux = (*aux).next;

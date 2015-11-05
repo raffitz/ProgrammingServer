@@ -2,6 +2,7 @@
 
 #include "stat_report.h"
 
+
 report_args* set_report_args(int req_pipe, req_base* req_list){
 	report_args* aux;
 	
@@ -37,7 +38,7 @@ void stat_print(int fd,req_queue * base){
 void stat_clear(int fd, char* file, req_queue ** base, req_queue** top){
 	int sg_fd;
 	req_freeall(base,top);
-	dprintf(fd,"<html><head><title>Estatísticas - Pedidos</title>\n");
+	dprintf(fd,"<html><head><title>Estatísticas - ClearAll</title>\n");
 	dprintf(fd,"</head><body>\n");
 	dprintf(fd,"<h1>Estatísticas - Clear All</h1>\n");
 	dprintf(fd,"Todos os dados armazenados foram eliminados.\n");
@@ -66,7 +67,7 @@ void * report_handler(void* arg){
 		fd = open(buffer,O_WRONLY);
 		free(buffer);
 		if(fd<0){
-			perror("open(fifo)");
+			perror("open(fifo sr)");
 		}else{
 			if(type == 0){
 				stat_clear(fd, NULL, &((*(*arguments).req_list).base),&((*(*arguments).req_list).top));
