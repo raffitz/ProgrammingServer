@@ -10,13 +10,13 @@ server_73425_73786: main.o comm_man.o req_handler.o stats.o stat_report.o pid_li
 	$(CC) main.o comm_man.o req_handler.o stats.o stat_report.o cgi_handler.o pid_list.o -o server_73425_73786 -lpthread -g
 
 main.o: main.c comm_man.h pid_list.h req_handler.h stat_report.h cgi_handler.h stats.h
-	$(CC) $(CFLAGS) main.c -o main.o -lpthread
+	$(CC) $(CFLAGS) main.c -o main.o
 
 comm_man.o: comm_man.c comm_man.h req_handler.h stat_report.h cgi_handler.h stats.h
 	$(CC) $(CFLAGS) comm_man.c -o comm_man.o
 
 req_handler.o: req_handler.c req_handler.h cgi_handler.h stat_report.h cgi_handler.h stats.h
-	$(CC) $(CFLAGS) req_handler.c -o req_handler.o -lpthread
+	$(CC) $(CFLAGS) req_handler.c -o req_handler.o
 
 stats.o: stats.c stats.h
 	$(CC) $(CFLAGS) stats.c -o stats.o

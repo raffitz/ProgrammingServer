@@ -2,6 +2,7 @@
 
 #include "comm_man.h"
 
+pid_t parent;
 
 int create_socket(){
 	int socketfd;
@@ -36,9 +37,23 @@ void socket_hub(int socketfd,int statfd,int report_fd){
 	socklen_t client_length = sizeof(struct sockaddr_in);
 	int new_socket;
 	
+	request* aux;
+	pthread_attr_t attributes;
+	pthread_t* handlers;
+	
+	pthread_attr_setdetachstate(&attributes,PTHREAD_CREATE_DETACHED);
+	
 	while(1){
 		new_socket = accept(socketfd,(struct sockaddr*)&client_info,&client_length);
-		handle_request(new_request(new_socket,client_info,client_length,statfd,report_fd));
+		aux = new_request(new_socket,client_info,client_length,statfd,report_fd);
+		handlers = malloc(sizeof(pthread_t));
+		if(pthread_create(handlers,&attributes,handle_request,(void*)aux)!=0){
+			if(kill(parent,SIGUSR2)!=0){
+				perror("kill");
+			}
+			handle_request(aux);
+		}
+		free(handlers);
 	}
 	
 }

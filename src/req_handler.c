@@ -4,7 +4,9 @@
 
 #define _RH_BUFFSIZE 16
 
-char* pathname;
+char* pathname; /* DOCUMENT_ROOT */
+char* cgipath; /* CGI_ROOT */
+
 
 request * new_request(int new_socket, struct sockaddr_in client_info, socklen_t client_length,int stat_fd,int report_fd){
 	request * aux;
@@ -51,14 +53,24 @@ void * handle_request(void* arg){
 	sscanf(inet_ntoa((*req).client_info.sin_addr),"%"SCNu8".%"SCNu8".%"SCNu8".%"SCNu8"",&address[0],&address[1],&address[2],&address[3]);
 	
 	while(1){
-		buffer = realloc(buffer,tries * _RH_BUFFSIZE * sizeof(char) + 1);
+		/* Bugtesting purposes only: */
+		if(tries>16){
+			printf("\n%d:«««%s»»»\n",tries,buffer);
+		}
+		
+		/* end */
+		buffer = realloc(buffer,sizeof(char)*(1 + tries * _RH_BUFFSIZE));
 		if(buffer==NULL){
+			perror("realloc");
 			printf("Error: Out of memory!\n");
 			break;
 		}
 		read_nr = read((*req).socket_fd,buffer + (tries-1) * _RH_BUFFSIZE * sizeof(char),_RH_BUFFSIZE);
-		buffer[read_nr + (tries-1)*_RH_BUFFSIZE] = '\0';
-		if((breakplace = strchr(buffer,'\n'))!=NULL){
+		buffer[(read_nr) + (tries-1)*_RH_BUFFSIZE] = '\0';
+		if(strlen(buffer)==0){
+			code = 400;
+			break;
+		}else if((breakplace = strchr(buffer,'\n'))!=NULL){
 			if (*(breakplace - sizeof(char)) != '\r'){
 				code = 400;
 			}else{
@@ -111,8 +123,12 @@ void * handle_request(void* arg){
 									}else{
 										if(fstat(file_fd,&filestat)==0 && filestat.st_mode & S_IXUSR){
 											/* CGI */
-											code = 200;
-											type = 5;
+											if(cgipath[0]!='\0' && strstr(name,cgipath)==NULL){
+												code = 403;
+											}else{
+												code = 200;
+												type = 5;
+											}
 											close(file_fd);
 										}else{
 											/* File */
@@ -218,7 +234,10 @@ void * handle_request(void* arg){
 			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 415 Unsupported Media Type\r\n\n",protocol);
 			break;
 		case 404:
-			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 404 Not Found\r\n\n<html><head><title>File Not Found</title></head><body><h1>Error 404</h1> This file was not found.</body></html>",protocol);
+			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 404 Not Found\r\n\n<html><head><title>File Not Found</title></head><body><h1>Error 404</h1> The file \"%s\" was not found.</body></html>",protocol,name);
+			break;
+		case 403:
+			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 403 Forbidden\r\n\n",protocol);
 			break;
 		case 400:
 		default:
