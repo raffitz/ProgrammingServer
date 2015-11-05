@@ -57,12 +57,6 @@ void * handle_request(void* arg){
 	sscanf(inet_ntoa((*req).client_info.sin_addr),"%"SCNu8".%"SCNu8".%"SCNu8".%"SCNu8"",&address[0],&address[1],&address[2],&address[3]);
 	
 	while(1){
-		/* Bugtesting purposes only: */
-		if(tries>16){
-			printf("\n%d:«««%s»»»\n",tries,buffer);
-		}
-		
-		/* end */
 		buffer = realloc(buffer,sizeof(char)*(1 + tries * _RH_BUFFSIZE));
 		if(buffer==NULL){
 			perror("realloc");
@@ -116,37 +110,40 @@ void * handle_request(void* arg){
 								code = 200;
 								type = 6;
 							}else{
-								if(name[strlen(name)-1]=='/'){
-									/* Directory */
-									code = 200;
-									type = 3;
-								}else{
-									file_fd = open(c_name,O_RDONLY);
-									if(file_fd < 0){
-										code = 404;
+								file_fd = open(c_name,O_RDWR);
+								if(file_fd < 0){
+									if(errno == EISDIR){
+										/* Directory */
+										code = 200;
+										type = 3;
 									}else{
-										if(fstat(file_fd,&filestat)==0 && filestat.st_mode & S_IXUSR){
-											/* CGI */
-											if(cgipath[0]!='\0' && strstr(name,cgipath)==NULL){
-												code = 403;
-											}else{
-												code = 200;
-												type = 5;
-											}
-											close(file_fd);
+										/* File Not Found */
+										code = 404;
+									}
+								}else{
+									if(fstat(file_fd,&filestat)==0 && filestat.st_mode & S_IXUSR){
+										/* CGI */
+										if(cgipath[0]!='\0' && strstr(name,cgipath)==NULL){
+											/* Forbidden */
+											code = 403;
 										}else{
-											/* File */
-											extension = strrchr(name,'.');
-											if(strcmp(extension,".html")==0){
-												code = 200;
-												type = 0;
-											}else if(strcmp(extension,".png")==0){
-												code = 200;
-												type = 1;
-											}else{
-												close(file_fd);
-												code = 415;
-											}
+											code = 200;
+											type = 5;
+										}
+										close(file_fd);
+									}else{
+										/* File */
+										extension = strrchr(name,'.');
+										if(strcmp(extension,".html")==0){
+											code = 200;
+											type = 0;
+										}else if(strcmp(extension,".png")==0){
+											code = 200;
+											type = 1;
+										}else{
+											/* Unsupported Media Type*/
+											close(file_fd);
+											code = 415;
 										}
 									}
 								}
@@ -163,11 +160,16 @@ void * handle_request(void* arg){
 	do{
 		if(read((*req).socket_fd,buffer,sizeof(char))==0){
 			aborted = 1;
+			break;
 		}else if(buffer[0]=='\n'){
-			read((*req).socket_fd,buffer,sizeof(char));
-			if(buffer[0]=='\r'){
-				read((*req).socket_fd,buffer,sizeof(char));
-				if(buffer[0]=='\n') break;
+			if(read((*req).socket_fd,buffer,sizeof(char))==0){
+				aborted = 1;
+				break;
+			}else if(buffer[0]=='\r'){
+				if(read((*req).socket_fd,buffer,sizeof(char))==0){
+					aborted = 1;
+					break:
+				}else if(buffer[0]=='\n') break;
 			}
 		}
 	}while(1);
@@ -261,6 +263,7 @@ void * handle_request(void* arg){
 					}
 				}
 				break;
+			/* If code is not 200, sends appropriate message :*/
 			case 415:
 				dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 415 Unsupported Media Type\r\n\n",protocol);
 				break;
@@ -277,17 +280,17 @@ void * handle_request(void* arg){
 		}
 	}
 	
+	/* Closes inbound socket:*/
 	close((*req).socket_fd);
 	if(clock_gettime(counter,&dend)!=0){
 		perror("clock_gettime");
 	}
 	if(sem_wait(req_wr_sem)!=0) perror("sem_wait");
+	/* Sends to pipe the request details: */
 	req_write((*req).stat_fd,newrequest(name,code,address,start,(dend.tv_sec - dstart.tv_sec)*1000000 + (dend.tv_nsec - dstart.tv_nsec) / 1000));
 	if(sem_post(req_wr_sem)!=0) perror("sem_post");
 	
-	/*
-	printf("%d Recebeu pedido de %u.%u.%u.%u e demorou %ld\n",getpid(),address[0],address[1],address[2],address[3],(dend.tv_sec - dstart.tv_sec)*1000000 + (dend.tv_nsec - dstart.tv_nsec) / 1000);*/
-	
+	/* Frees adequate memory, returns from function. */
 	if(buffer!=NULL) free(buffer);
 	if(c_name!=NULL) free(c_name);
 	free(req);

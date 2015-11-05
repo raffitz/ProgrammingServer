@@ -2,7 +2,8 @@
 
 #include "stat_report.h"
 
-
+/* Creates a structure with the necessary arguments to be passed to
+   the report_handler function.*/
 report_args* set_report_args(int req_pipe, req_base* req_list){
 	report_args* aux;
 	
@@ -13,6 +14,8 @@ report_args* set_report_args(int req_pipe, req_base* req_list){
 	return aux;
 }
 
+/* Prints the statistics list in HTML format to the appropriate
+   file descriptor. */
 void stat_print(int fd,req_queue * base){
 	req_queue* aux =base;
 	dprintf(fd,"<html><head><title>Estatísticas - Pedidos</title>\n");
@@ -35,6 +38,8 @@ void stat_print(int fd,req_queue * base){
 	dprintf(fd,"</table></body></html>");
 }
 
+/* Clears the statistics list and sends a brief confirmation message in HTML
+   format to the appropriate file descriptor. */
 void stat_clear(int fd, char* file, req_queue ** base, req_queue** top){
 	int sg_fd;
 	req_freeall(base,top);
@@ -50,6 +55,8 @@ void stat_clear(int fd, char* file, req_queue ** base, req_queue** top){
 	return;
 }
 
+/* Receives the names of named pipes from an unnamed pipe, and sends the
+   adequate response to that named pipe. */
 void * report_handler(void* arg){
 	report_args* arguments = (report_args*) arg;
 	uint8_t type;

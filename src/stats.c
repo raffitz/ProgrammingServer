@@ -2,7 +2,7 @@
 
 #include "stats.h"
 
-
+/* Creates request structure from discrete variables */
 req_data newrequest(char*name,uint16_t code,uint8_t ip[4],time_t date, uint16_t length){
 	req_data req_return;
 	uint8_t i;
@@ -16,7 +16,7 @@ req_data newrequest(char*name,uint16_t code,uint8_t ip[4],time_t date, uint16_t 
 	return req_return;
 }
 
-
+/* Pushes the passed request structure to the top of the statistics list */
 void req_push(req_data data,req_queue** base,req_queue** top){
 	req_queue* aux;
 	if((*base) == NULL){
@@ -33,7 +33,7 @@ void req_push(req_data data,req_queue** base,req_queue** top){
 	return;
 }
 
-
+/* Frees the entirety of the statistics list */
 void req_freeall(req_queue** base,req_queue** top){
 	req_queue* aux;
 	while((*base)!=NULL){
@@ -46,6 +46,7 @@ void req_freeall(req_queue** base,req_queue** top){
 	return;
 }
 
+/* Reads from a file descriptor request structures, and pushes them to the list */
 uint16_t req_read(int fd,req_queue** base,req_queue** top){
 	uint16_t size;
 	char* aux;
@@ -69,6 +70,7 @@ uint16_t req_read(int fd,req_queue** base,req_queue** top){
 	return 1;
 }
 
+/* Writes to a file descriptor request structures */
 void req_write(int fd,req_data data){
 	uint16_t size;
 	size = strlen(data.name) + 1;
@@ -81,6 +83,7 @@ void req_write(int fd,req_data data){
 	free(data.name);
 }
 
+/* UNUSED - Loads from a file a statistics safeguard */
 void req_load(char* file,req_queue** base,req_queue** top){
 	int fd;
 	int counter = 0;
@@ -97,6 +100,7 @@ void req_load(char* file,req_queue** base,req_queue** top){
 	return;
 }
 
+/* UNUSED - Creates a statistics safeguard file */
 void req_save(char* file,req_queue* base){
 	int fd;
 	req_queue* aux = base;
@@ -110,6 +114,7 @@ void req_save(char* file,req_queue* base){
 	return;
 }
 
+/* Reads from a pipe request structures and pushes them to the stats list */
 void* stat_handler(void* arg){
 	req_base* base = (req_base *) arg;
 	

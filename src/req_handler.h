@@ -20,6 +20,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <errno.h>
 
 typedef struct request{
 	int socket_fd;

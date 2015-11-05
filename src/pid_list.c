@@ -6,6 +6,7 @@
 pid_list* pid_base;
 pid_list* pid_top;
 
+/* Adds a process number to the process list */
 void pid_add(pid_t pid,pid_list** base,pid_list** top){
 	pid_list* aux;
 	if((*base) == NULL){
@@ -22,7 +23,7 @@ void pid_add(pid_t pid,pid_list** base,pid_list** top){
 	return;
 }
 
-
+/* Frees the process list */
 void pid_freeall(pid_list** base,pid_list** top){
 	pid_list* aux;
 	while((*base)!=NULL){
@@ -34,6 +35,7 @@ void pid_freeall(pid_list** base,pid_list** top){
 	return;
 }
 
+/* Sends a SIGINT signal to all processes on the list */
 void pid_killall(pid_list* base){
 	pid_list* aux = base;
 	
@@ -46,6 +48,7 @@ void pid_killall(pid_list* base){
 	return;
 }
 
+/* Receives, from a pipe, process numbers to store in the list. */
 void* pid_handler(void* arg){
 	int* pipe = (int*)arg;
 	pid_t aux;

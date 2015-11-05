@@ -14,6 +14,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <signal.h>
+#include <unistd.h>
+#include <limits.h>
 
 
 #define _CF_BUFFER 2048
@@ -57,16 +59,25 @@ void debug_handler(int sig){
 
 /* SIGINT/SIGTERM handling function: */
 void sigint_handler(int sig){
-	printf("closing socket\n");
-	close(socket_fd);
+	pid_t local;
+	int i;
+	
 	sem_close(req_wr_sem);
 	sem_close(stat_sem);
-	if(getpid()==parent){
+	
+	if((local=getpid())==parent){
 		pid_killall(pid_base);
 		pid_freeall(&pid_base,&pid_top);
 		sem_unlink("/reqwrsem\0");
 		sem_unlink("/statsem\0");
 	}
+	
+	printf("%d: Closing All open file descriptors\n",local);
+	close(socket_fd);
+	for(i=0;i<sysconf(_SC_OPEN_MAX);i++){
+		close(i);
+	}
+	
 	exit(0);
 	return;
 }
@@ -185,7 +196,6 @@ int main(int argc,char** argv){
 	signal(SIGKILL,sigint_handler);
 	signal(SIGUSR1,load_config);
 	signal(SIGPIPE,SIG_IGN);
-	signal(SIGBUS,SIG_IGN);
 	
 	/* Initialization of structural threads: */
 	if(pthread_create(&pid_thread,NULL,pid_handler,(void*)pid_register)!=0){
