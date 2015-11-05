@@ -2,9 +2,6 @@
 
 #include "pid_list.h"
 
-/*Declaration of pid semaphore: */
-sem_t* pid_semaphore;
-
 /* Declaration of descendant list: */
 pid_list* pid_base;
 pid_list* pid_top;
@@ -52,7 +49,6 @@ void* pid_handler(void* arg){
 	int* pipe = (int*)arg;
 	pid_t aux;
 	while(1){
-		sem_wait(pid_semaphore);
 		read(pipe[0],&aux,sizeof(pid_t));
 		pid_add(aux,&pid_base,&pid_top);
 	}
