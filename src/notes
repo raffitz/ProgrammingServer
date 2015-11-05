@@ -1,7 +1,11 @@
-O processo principal tem uma thread a receber pedidos da pipe, e a metê-los na lista. Tem de haver maneira de o processo filho criar pipe para solicitar a lista toda como deve de ser.
-Possivelmente o processo pai tem uma outra thread à espera de receber comunicações de outra pipe, com o nome da fifo para a qual tem de escrever o resultado do pedido ou com o request de 
-clearall. o processo filho a fazer a transmissão é que tem de redireccionar o conteúdo da fifo para a socket.
-o nome da fifo em questão deve ser algo único ao processo a usá-la, tipo PID ou thread_id, ou, no caso de ser uma thread de outro processo, ambas.
+O processo principal tem uma thread a receber pedidos da pipe, e a metê-los na lista. 
+Tem de haver maneira de o processo filho criar pipe para solicitar a lista toda como 
+deve de ser.
+Possivelmente o processo pai tem uma outra thread à espera de receber comunicações de 
+outra pipe, com o nome da fifo para a qual tem de escrever o resultado do pedido ou com 
+o request de 
+clearall. o processo filho a fazer a transmissão é que tem de redireccionar o conteúdo 
+da fifo para a socket.
+o nome da fifo em questão deve ser algo único ao processo a usá-la, tipo PID ou 
+thread_id, ou, no caso de ser uma thread de outro processo, ambas.
 
-É melhor generalizar as funções que escrevem e lêm de um file descriptor uma estrutura de estatística, e depois o que lê e guarda o ficheiro de salvaguarda usa-as. Isto facilita a 
-leitura e a escrita para a pipe.

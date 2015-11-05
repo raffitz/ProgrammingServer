@@ -24,9 +24,9 @@ void stat_print(int fd,req_queue * base){
 	dprintf(fd,"</table></body></html>");
 }
 
-req_queue* stat_clear(int fd, char* file, req_queue * base){
+void stat_clear(int fd, char* file, req_queue ** base, req_queue** top){
 	int sg_fd;
-	req_freeall(base);
+	req_freeall(base,top);
 	dprintf(fd,"<html><head><title>Estatísticas - Pedidos</title>\n");
 	dprintf(fd,"</head><body>\n");
 	dprintf(fd,"<h1>Estatísticas - Clear All</h1>\n");
