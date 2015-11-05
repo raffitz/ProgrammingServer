@@ -1,6 +1,7 @@
 /* Cabeçalho */
 
 #define _XOPEN_SOURCE 700
+#define _BSD_SOURCE
 #include "pid_list.h"
 #include "comm_man.h"
 #include <stdio.h>
@@ -25,12 +26,6 @@ int main(int argc,char** argv){
 	
 	/* Declaration of server socket: */
 	int socket_fd;
-	
-	int news;
-	struct sockaddr_in client_info;
-	socklen_t client_isize;
-	char cenas[100];
-	int cenasc;
 	
 	/* Declaration of structural threads: */
 	/*pthread_t pid_thread;*/
@@ -57,23 +52,13 @@ int main(int argc,char** argv){
 		exit(-1);
 	}
 	*/
-	while(1){
-		news = accept(socket_fd,(struct sockaddr*)&client_info,&client_isize);
-		printf("Recebeu pedido.\n");
-		dprintf(news,"HTTP/1.1 200 OK\r\nContent-Type:text/html; charset=utf-8\n\n<html><body>\n");
-		cenasc = read(news,cenas,100);
-		dprintf(news,"Desta vez funcionas ou não, moço? <h1> Acorda para a vida!</h1>\n</body></html>\n\r\n");
-		do{
-			cenasc = read(news,cenas,100);
-		}while(cenasc>0);
-		close(news);
-	}
 	
 	
+	socket_hub(socket_fd);
 	
 	
 	
 	/* Resto do código com os forks e os threads etc e tal */
 	
-	
+	exit(0);
 }

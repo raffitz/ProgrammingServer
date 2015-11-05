@@ -6,6 +6,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 int create_socket(){
 	int socketfd;
@@ -31,4 +33,33 @@ int create_socket(){
 	}
 	freeaddrinfo(server_address);
 	return socketfd;
+}
+
+void socket_hub(int socketfd){
+	struct sockaddr_in client_info;
+	socklen_t client_length;
+	int news;
+	int length;
+	char buffer[100];
+	char jic;
+	int bufferc;
+	
+	while(1){
+		news = accept(socketfd,(struct sockaddr*)&client_info,&client_length);
+		printf("Recebeu pedido.\n");
+		jic = '\0';
+		/*do{
+			bufferc = read(news,buffer,99);
+			buffer[99]=0;
+			length = strlen(buffer);
+			if (length==1 && jic=='\r') break;
+			if(buffer[length-1]=='\n' && buffer[length-2]=='\r') break;
+			jic = buffer[length-1];
+		}while(bufferc>0);*/
+		
+		dprintf(news,"HTTP/1.1 200 OK\r\nContent-Type:text/html; charset=utf-8\n\n<html><body>\n");
+		dprintf(news,"Desta vez funcionas ou não, moço? <h1> Acorda para a vida!</h1>\nAddress:%s<br/>Done, I guess...</body></html>\n\r\n",inet_ntoa(client_info.sin_addr));
+		close(news);
+	}
+	
 }

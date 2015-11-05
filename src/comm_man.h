@@ -9,3 +9,4 @@
 #include <netinet/ip.h>
 
 int create_socket();
+void socket_hub(int socketfd);
