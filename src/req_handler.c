@@ -33,6 +33,7 @@ void * handle_request(void* arg){
 	int tries = 1;
 	int file_fd;
 	pid_t cgi_aux;
+	pid_t cgi_tim;
 	uint16_t code = 0;
 	uint8_t i;
 	uint8_t address[4];
@@ -40,6 +41,7 @@ void * handle_request(void* arg){
 	uint8_t type;
 	uint8_t report_type;
 	uint8_t report_ns;
+	uint8_t aborted = 0;
 	time_t start;
 	clockid_t counter;
 	struct timespec dstart,dend;
@@ -156,94 +158,114 @@ void * handle_request(void* arg){
 		tries++;
 	}
 	/* Reads rest of request, so browsers don't reject answer: */
-	read_nr = 0;
 	do{
-		read_nr = read((*req).socket_fd,buffer,tries * _RH_BUFFSIZE * sizeof(char));
-		buffer[read_nr] = '\0';
-	}while(read_nr==tries * _RH_BUFFSIZE * sizeof(char));
+		if(read((*req).socket_fd,buffer,sizeof(char))==0){
+			aborted = 1;
+		}else if(buffer[0]=='\n'){
+			read((*req).socket_fd,buffer,sizeof(char));
+			if(buffer[0]=='\r'){
+				read((*req).socket_fd,buffer,sizeof(char));
+				if(buffer[0]=='\n') break;
+			}
+		}
+	}while(1);
 	
-	/* Sends answer: */
-	switch(code){
-		case 200:
-			/* Sends adequate header: */
-			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 200 OK\r\n",protocol);
-			/* If content is html-formatted text: */
-			if(type%2 == 0){
-				dprintf((*req).socket_fd,"Content-Type:text/html; charset=utf-8\n\n");
-			}
-			/* If content is a png image: */
-			if(type==1){
-				dprintf((*req).socket_fd,"Content-Type:image/png\n\n");
-			}
-			
-			/* If content is a CGI: */
-			if(type==5){
-				cgi_aux = 0;
-				if((cgi_aux = fork())==0){
-					cgi_run((*req).socket_fd,c_name);
-				}else{
-					waitpid(cgi_aux,NULL,0);
+	if(!aborted){
+		/* Sends answer: */
+		switch(code){
+			case 200:
+				/* Sends adequate header: */
+				dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 200 OK\r\n",protocol);
+				/* If content is html-formatted text: */
+				if(type%2 == 0){
+					dprintf((*req).socket_fd,"Content-Type:text/html; charset=utf-8\n\n");
 				}
-			}
-			
-			/* If we are interfacing with the statistics module: */
-			if(type>5){
-				if(type==6){
-					report_type=0;
-				}else{
-					report_type=1;
+				/* If content is a png image: */
+				if(type==1){
+					dprintf((*req).socket_fd,"Content-Type:image/png\n\n");
 				}
-				write((*req).report_fd,&report_type,sizeof(uint8_t));
-				sprintf(report_name,"%x_%x",getpid(),(unsigned int) pthread_self());
-				report_ns = strlen(report_name) + 1;
-				write((*req).report_fd,&report_ns,sizeof(uint8_t));
-				if(mkfifo(report_name,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)<0){
-					perror("mkfifo");
-					break;
+			
+				/* If content is a CGI: */
+				if(type==5){
+					cgi_aux = 0;
+					if((cgi_aux = fork())==0){
+						cgi_run((*req).socket_fd,c_name);
+					}else if((cgi_tim = fork())==0){
+						/* Given that it is a sub-process, "buffer" can be
+						carelessly re-utilized here: */
+						free(buffer);
+						buffer = malloc(512*sizeof(char));
+						sprintf(buffer,"%lld",(long long int)cgi_aux);
+						execl("cgi_timer","cgi_timer",buffer,NULL);
+					}else{
+						waitpid(cgi_aux,NULL,0);
+						if(!waitpid(cgi_tim,NULL,WNOHANG)){
+							kill(cgi_tim,SIGKILL);
+							waitpid(cgi_tim,NULL,0);
+						}
+					}
 				}
-				write((*req).report_fd,report_name,report_ns*sizeof(char));
-				file_fd = open(report_name,O_RDONLY);
-			}
 			
-			/* If content is a file (content-type has been already sent): */
-			if(type<2 || type>5){
-				do{
-					read_nr = read(file_fd,buffer,tries * _RH_BUFFSIZE * sizeof(char));
-					write((*req).socket_fd,buffer,read_nr);
-				}while(read_nr > 0);
-				dprintf((*req).socket_fd,"\n");
-				close(file_fd);
-			}
-			
-			/* Continuation of the statistics section: */
-			if(type>5){
-				unlink(report_name);
-			}
-			
-			/* If we are listing contents of a directory: */
-			if(type==3){
-				cgi_aux = 0;
-				if((cgi_aux = fork())==0){
-					cgi_run_args((*req).socket_fd,"listfiles",c_name);
-				}else{
-					waitpid(cgi_aux,NULL,0);
+				/* If we are interfacing with the statistics module: */
+				if(type>5){
+					if(type==6){
+						report_type=0;
+					}else{
+						report_type=1;
+					}
+					write((*req).report_fd,&report_type,sizeof(uint8_t));
+					sprintf(report_name,"%x_%x",getpid(),(unsigned int) pthread_self());
+					report_ns = strlen(report_name) + 1;
+					write((*req).report_fd,&report_ns,sizeof(uint8_t));
+					if(mkfifo(report_name,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)<0){
+						perror("mkfifo");
+						break;
+					}
+					write((*req).report_fd,report_name,report_ns*sizeof(char));
+					file_fd = open(report_name,O_RDONLY);
 				}
-			}
-			break;
-		case 415:
-			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 415 Unsupported Media Type\r\n\n",protocol);
-			break;
-		case 404:
-			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 404 Not Found\r\n\n<html><head><title>File Not Found</title></head><body><h1>Error 404</h1> The file \"%s\" was not found.</body></html>",protocol,name);
-			break;
-		case 403:
-			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 403 Forbidden\r\n\n",protocol);
-			break;
-		case 400:
-		default:
-			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 400 Bad Request\r\n\n",protocol);
-			break;
+			
+				/* If content is a file (content-type has been already sent): */
+				if(type<2 || type>5){
+					do{
+						read_nr = read(file_fd,buffer,tries * _RH_BUFFSIZE * sizeof(char));
+						write((*req).socket_fd,buffer,read_nr);
+					}while(read_nr > 0);
+					dprintf((*req).socket_fd,"\n");
+					close(file_fd);
+				}
+			
+				/* Continuation of the statistics section: */
+				if(type>5){
+					unlink(report_name);
+				}
+			
+				/* If we are listing contents of a directory: */
+				if(type==3){
+					cgi_aux = 0;
+					if((cgi_aux = fork())==0){
+						cgi_run_args((*req).socket_fd,"listfiles",c_name,name);
+					}else{
+						waitpid(cgi_aux,NULL,0);
+					}
+				}
+				break;
+			case 415:
+				dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 415 Unsupported Media Type\r\n\n",protocol);
+				break;
+			case 404:
+				dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 404 Not Found\r\n\n<html><head><title>File Not Found</title></head><body><h1>Error 404</h1> The file \"%s\" was not found.</body></html>",protocol,name);
+				break;
+			case 403:
+				dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 403 Forbidden\r\n\n",protocol);
+				break;
+			case 400:
+			default:
+				dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 400 Bad Request\r\n\n",protocol);
+				break;
+		}
 	}
+	
 	close((*req).socket_fd);
 	if(clock_gettime(counter,&dend)!=0){
 		perror("clock_gettime");

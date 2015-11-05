@@ -4,7 +4,7 @@
 CC=gcc
 CFLAGS=-Wall -pedantic -c -std=gnu11 -g
 
-all: server_73425_73786
+all: server_73425_73786 cgi_timer
 
 server_73425_73786: main.o comm_man.o req_handler.o stats.o stat_report.o pid_list.o cgi_handler.o
 	$(CC) main.o comm_man.o req_handler.o stats.o stat_report.o cgi_handler.o pid_list.o -o server_73425_73786 -lpthread -g
@@ -29,6 +29,9 @@ cgi_handler.o: cgi_handler.c cgi_handler.h
 	
 pid_list.o: pid_list.c pid_list.h
 	$(CC) $(CFLAGS) pid_list.c -o pid_list.o
+
+cgi_timer: cgi_timer.c
+	$(CC) -Wall -pedantic -std=gnu11 -g cgi_timer.c -o cgi_timer
 
 clear:
 	rm *.o *~
