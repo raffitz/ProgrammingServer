@@ -2,7 +2,7 @@
 
 #include "req_handler.h"
 
-#define _RH_BUFFSIZE 2048
+#define _RH_BUFFSIZE 16
 
 char* pathname;
 
@@ -20,7 +20,7 @@ void * handle_request(void* arg){
 	char* buffer = NULL;
 	char* name = NULL;
 	char* c_name = NULL;
-	char* breakplace;
+	char* breakplace = NULL;
 	char* extension;
 	struct stat filestat;
 	int read_nr;
@@ -38,8 +38,9 @@ void * handle_request(void* arg){
 	while(1){
 		buffer = realloc(buffer,tries * _RH_BUFFSIZE * sizeof(char) + 1);
 		read_nr = read((*req).socket_fd,buffer + (tries-1) * _RH_BUFFSIZE * sizeof(char),_RH_BUFFSIZE);
-		buffer[read_nr] = '\0';
+		buffer[read_nr + (tries-1)*_RH_BUFFSIZE] = '\0';
 		if((breakplace = strchr(buffer,'\n'))!=NULL){
+			/*printf("\n«a«%s»a»\n\n«b«%s»b»\n",buffer,breakplace);*/
 			if (*(breakplace - sizeof(char)) != '\r'){
 				code = 400;
 			}else{
@@ -95,7 +96,14 @@ void * handle_request(void* arg){
 			}
 			break;
 		}
+		tries++;
 	}
+	/* Reads rest of request, so browsers don't reject answer: */
+	read_nr = 0;
+	do{
+		read_nr = read((*req).socket_fd,buffer,tries * _RH_BUFFSIZE * sizeof(char));
+		buffer[read_nr + (tries-1)*_RH_BUFFSIZE] = '\0';
+	}while(read_nr==tries * _RH_BUFFSIZE * sizeof(char));
 	switch(code){
 		case 200:
 			dprintf((*req).socket_fd,"HTTP/1.%"SCNu8" 200 OK\r\n",protocol);
@@ -111,6 +119,7 @@ void * handle_request(void* arg){
 					read_nr = read(file_fd,buffer,tries * _RH_BUFFSIZE * sizeof(char));
 					write((*req).socket_fd,buffer,read_nr);
 				}while(read_nr > 0);
+				dprintf((*req).socket_fd,"\n");
 			}
 			break;
 		case 415:
