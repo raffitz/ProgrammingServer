@@ -1,4 +1,13 @@
-/* Cabeçalho */
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: main.c
+ *	Descriçao: Rotina principal do projecto
+ ******************************************************************************/
 
 #define _XOPEN_SOURCE 700
 #define _BSD_SOURCE

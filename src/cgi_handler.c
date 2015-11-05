@@ -1,4 +1,13 @@
-/* Cabeçalho */
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: cgi_handler.c
+ *	Descriçao: Contém as funções de gestão de CGIs
+ ******************************************************************************/
 
 #include "cgi_handler.h"
 

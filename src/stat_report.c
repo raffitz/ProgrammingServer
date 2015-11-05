@@ -1,4 +1,13 @@
-/* Cabeçalho */
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: stat_report.c
+ *	Descriçao: Implementa as funções relacionadas com o módulo de estatística
+ ******************************************************************************/
 
 #include "stat_report.h"
 

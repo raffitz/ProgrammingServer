@@ -1,4 +1,13 @@
-/* Cabeçalho */
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: req_handler.h
+ *	Descriçao: Includes e Protótipos de req_handler.c
+ ******************************************************************************/
 
 #include "stat_report.h"
 #include "cgi_handler.h"

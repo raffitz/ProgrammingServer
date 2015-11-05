@@ -1,4 +1,13 @@
-/* cabeçalho */
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: stats.c
+ *	Descriçao: Implementa as funções de armazenamento dos pedidos
+ ******************************************************************************/
 
 #include "stats.h"
 

@@ -1,5 +1,13 @@
-/* Cabeçalho */
-
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: cgi_timer.c
+ *	Descriçao: Aplicação de temporização para o CGI
+ ******************************************************************************/
 
 #include <unistd.h>
 #include <signal.h>

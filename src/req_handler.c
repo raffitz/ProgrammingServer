@@ -1,4 +1,13 @@
-/* Cabeçalho */
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: req_handler.c
+ *	Descriçao: Gestor de pedidos
+ ******************************************************************************/
 
 #include "req_handler.h"
 
@@ -168,7 +177,7 @@ void * handle_request(void* arg){
 			}else if(buffer[0]=='\r'){
 				if(read((*req).socket_fd,buffer,sizeof(char))==0){
 					aborted = 1;
-					break:
+					break;
 				}else if(buffer[0]=='\n') break;
 			}
 		}

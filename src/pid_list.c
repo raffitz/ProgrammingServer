@@ -1,4 +1,13 @@
-/* cabeçalho */
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: pid_list.c
+ *	Descriçao: Gestão dos processos filhos
+ ******************************************************************************/
 
 #include "pid_list.h"
 

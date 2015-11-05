@@ -1,4 +1,13 @@
-/* Cabeçalho */
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: stats.h
+ *	Descriçao: Includes e Protótipos de stats.c
+ ******************************************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>

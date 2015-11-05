@@ -1,4 +1,4 @@
 #!/bin/sh
 
 rm ./*~
-tar -vcf ../psis-$(date +%F-%Hh%M).tar ../projecto/*
+tar -vczf ../psis-$(date +%F-%Hh%M).tgz ../projecto/*

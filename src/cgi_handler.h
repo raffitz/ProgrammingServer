@@ -1,4 +1,13 @@
-/* Cabeçalho */
+/*******************************************************************************
+ *	PROJECTO PSis 2ºSEMESTRE 2013-2014
+ *		Servidor Web
+ *	
+ *	Rafael Gonçalves 73786
+ *	António Bacelar 73425
+ *
+ *	Ficheiro: cgi_handler.h
+ *	Descriçao: Includes e Protótipos de cgi_handler.c
+ ******************************************************************************/
 
 #include <unistd.h>
 
