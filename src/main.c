@@ -53,9 +53,15 @@ int main(int argc,char** argv){
 	}
 	*/
 	
+	switch(fork()){
+		case 0:
+			socket_hub(socket_fd);
+			break;
+		default:
+			break;
+	}
 	
-	socket_hub(socket_fd);
-	
+	while(1);
 	
 	
 	/* Resto do código com os forks e os threads etc e tal */

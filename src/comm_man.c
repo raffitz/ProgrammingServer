@@ -37,12 +37,13 @@ int create_socket(){
 
 void socket_hub(int socketfd){
 	struct sockaddr_in client_info;
-	socklen_t client_length;
+	socklen_t client_length = sizeof(struct sockaddr_in);
 	int news;
 	int length;
 	char buffer[100];
 	char jic;
 	int bufferc;
+	
 	
 	while(1){
 		news = accept(socketfd,(struct sockaddr*)&client_info,&client_length);
